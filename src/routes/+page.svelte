@@ -1,4 +1,3 @@
-<!-- +page.svelte -->
 <script>
   let coefficients = {
     a: 1,
@@ -103,7 +102,7 @@
 
   function handleCoefficientChange(coeff, event) {
     coefficients[coeff] = Number(event.target.value);
-    coefficients = coefficients; // trigger reactivity
+    coefficients = { ...coefficients }; // trigger reactivity
   }
 
   // Generate grid lines
@@ -112,9 +111,10 @@
 </script>
 
 <div class="container mx-auto p-4">
-  <div class="bg-white rounded-lg shadow-lg p-6">
+  <div class="bg-white border rounded-lg p-6 shadow-lg">
     <h2 class="text-2xl font-bold mb-4">Cubic Polynomial and Derivative</h2>
 
+    <!-- Coefficient Sliders -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {#each Object.entries(coefficients) as [coeff, value]}
         <div class="flex flex-col space-y-2">
@@ -134,7 +134,7 @@
             min="-5"
             max="5"
             step="0.25"
-            {value}
+            bind:value={coefficients[coeff]}
             on:input={(e) => handleCoefficientChange(coeff, e)}
             class="w-full"
           />
@@ -143,10 +143,16 @@
       {/each}
     </div>
 
-    <div class="h-[600px]">
-      <svg {width} {height}>
-        <!-- Grid -->
+    <!-- Responsive SVG Graph -->
+    <div class="relative w-full overflow-hidden">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+        class="w-full h-auto"
+      >
+        <!-- Grid Lines and Labels -->
         {#each xGridLines as x}
+          <!-- Vertical Grid Lines -->
           <line
             x1={transformX(x)}
             y1={padding}
@@ -155,15 +161,20 @@
             stroke="#e5e7eb"
             stroke-dasharray="4,4"
           />
+          <!-- X-Axis Labels -->
           <text
             x={transformX(x)}
             y={height - padding + 20}
             text-anchor="middle"
-            class="text-sm">{x}</text
+            class="text-sm"
+            fill="#333"
           >
+            {x}
+          </text>
         {/each}
 
         {#each yGridLines as y}
+          <!-- Horizontal Grid Lines -->
           <line
             x1={padding}
             y1={transformY(y)}
@@ -172,13 +183,17 @@
             stroke="#e5e7eb"
             stroke-dasharray="4,4"
           />
+          <!-- Y-Axis Labels -->
           <text
             x={padding - 10}
             y={transformY(y)}
             text-anchor="end"
             alignment-baseline="middle"
-            class="text-sm">{y}</text
+            class="text-sm"
+            fill="#333"
           >
+            {y}
+          </text>
         {/each}
 
         <!-- Axes -->
@@ -199,7 +214,7 @@
           stroke-width="2"
         />
 
-        <!-- Function curves -->
+        <!-- Function and Derivative Curves -->
         <path d={functionPath} stroke="#8884d8" fill="none" stroke-width="2" />
         <path
           d={derivativePath}
@@ -208,9 +223,9 @@
           stroke-width="2"
         />
 
-        <!-- Critical points -->
+        <!-- Critical Points -->
         {#each criticalPoints as point}
-          <!-- Vertical line -->
+          <!-- Vertical Dashed Line -->
           <line
             x1={transformX(point.x)}
             y1={padding}
@@ -220,11 +235,11 @@
             stroke-dasharray="4,4"
           />
 
-          <!-- Point on function -->
+          <!-- Point on Function -->
           <circle
             cx={transformX(point.x)}
             cy={transformY(point.f)}
-            r="4"
+            r="5"
             fill="red"
           />
           <text
@@ -232,12 +247,14 @@
             y={transformY(point.f) - 10}
             text-anchor="middle"
             class="text-sm"
-            >{point.f > 0 ? "Max" : "Min"} ({point.x.toFixed(1)}, {point.f.toFixed(
-              1
-            )})</text
+            fill="red"
           >
+            {point.f > 0 ? "Max" : "Min"} ({point.x.toFixed(2)}, {point.f.toFixed(
+              2
+            )})
+          </text>
 
-          <!-- Point on x-axis -->
+          <!-- Point on X-Axis -->
           <circle
             cx={transformX(point.x)}
             cy={transformY(0)}
@@ -248,20 +265,38 @@
             x={transformX(point.x)}
             y={transformY(0) + 20}
             text-anchor="middle"
-            class="text-sm">f'({point.x.toFixed(1)}) = 0</text
+            class="text-sm"
+            fill="#0066cc"
           >
+            f'({point.x.toFixed(2)}) = 0
+          </text>
         {/each}
 
         <!-- Legend -->
-        <g transform="translate({width - padding - 150}, {padding + 20})">
-          <circle cx="0" cy="0" r="4" fill="#8884d8" />
-          <text x="10" y="0" alignment-baseline="middle" class="text-sm"
-            >f(x) = ax³ + bx² + cx + d</text
+        <g transform={`translate(${width - padding - 180}, ${padding + 20})`}>
+          <!-- Function Legend -->
+          <circle cx="0" cy="0" r="5" fill="#8884d8" />
+          <text
+            x="10"
+            y="5"
+            alignment-baseline="middle"
+            class="text-sm"
+            fill="#333"
           >
-          <circle cx="0" cy="20" r="4" fill="#82ca9d" />
-          <text x="10" y="20" alignment-baseline="middle" class="text-sm"
-            >f'(x) = 3ax² + 2bx + c</text
+            f(x) = ax³ + bx² + cx + d
+          </text>
+
+          <!-- Derivative Legend -->
+          <circle cx="0" cy="30" r="5" fill="#82ca9d" />
+          <text
+            x="10"
+            y="35"
+            alignment-baseline="middle"
+            class="text-sm"
+            fill="#333"
           >
+            f'(x) = 3ax² + 2bx + c
+          </text>
         </g>
       </svg>
     </div>
@@ -271,5 +306,17 @@
 <style>
   :global(.text-sm) {
     font-size: 12px;
+  }
+
+  /* Optional: Enhance text readability */
+  text {
+    font-family: Arial, sans-serif;
+  }
+
+  /* Ensure the container maintains padding on smaller screens */
+  @media (max-width: 640px) {
+    .container {
+      padding: 2rem;
+    }
   }
 </style>
